@@ -1,10 +1,17 @@
 CC:= gcc
 OUT:= a.out
 C_FILENAME:= main.c
-C_FLAG:= -g
+OBJ_FILE:= tcp.o main.o
+C_FLAG:= -Wall
 
-all: $(C_FILENAME)
-	$(CC) -o $(OUT) $(C_FILENAME) $(C_FLAG)
+all: $(OBJ_FILE)
+	$(CC) -o $(OUT) $(OBJ_FILE) $(C_FLAG)
 
-clean: $(OUT)
-	rm -f a.out
+main.o: main.c
+	$(CC) -o main.o main.c -c
+
+tcp.o: tcp.h tcp.c
+	$(CC) -o tcp.o tcp.c -c
+  
+clean: 
+	rm -f a.out tcp.o main.o
