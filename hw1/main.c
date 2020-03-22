@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 
 #include "tcp.h"
+#include "udp.h"
 
 void traverse_proc_pid(int socket);	//read the directory(file) name in /proc directory, which stands for the pid of processes
 int is_target(char *str);	//check if the string is actually the thing we want(pid>1000).
@@ -53,7 +54,7 @@ int main(int argc, char **argv){
 	}
 
 	//traverse_proc_pid(1234);
-	read_net_tcp_v6(1234);
+	read_net_udp_v4(1234);
 
 	if(!filtering_stirng){
 		free(filtering_stirng);

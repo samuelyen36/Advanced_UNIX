@@ -4,9 +4,9 @@
 #include <string.h>
 #include <dirent.h>
 #include <arpa/inet.h>*/
-#include "tcp.h"
+#include "udp.h"
 
-void read_net_tcp_v4(int socket){
+void read_net_udp_v4(int socket){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -14,11 +14,10 @@ void read_net_tcp_v4(int socket){
 	char local_ip[9],des_ip[9];	//8char
 	char local_port[5],des_port[5];		//4char
 	char c;
-	int tcp_inode;
 	unsigned int int_local_ip, int_local_port, int_des_ip, int_des_port;
 	char readable_local_ip[20], readable_des_ip[20];
 	struct in_addr ipv4_local,ipv4_des;
-	fp = fopen("/proc/net/tcp","r");
+	fp = fopen("/proc/net/udp","r");
 	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
 			continue;
@@ -61,7 +60,7 @@ void read_net_tcp_v4(int socket){
 	return;
 }
 
-void read_net_tcp_v6(int socket){
+void read_net_udp_v6(int socket){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -69,11 +68,10 @@ void read_net_tcp_v6(int socket){
 	char local_ip[33],des_ip[33];	//33char
 	char local_port[5],des_port[5];		//4char
 	char c;
-	int tcp_inode;
 	unsigned int int_local_ip, int_local_port, int_des_ip, int_des_port;
 	char readable_local_ip[40], readable_des_ip[40];
 	struct in6_addr ipv6_local,ipv6_des;
-	fp = fopen("/proc/net/tcp6","r");
+	fp = fopen("/proc/net/udp6","r");
 	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
 			continue;
@@ -108,7 +106,7 @@ void read_net_tcp_v6(int socket){
 
 
 		//ipv6_local.s6_addr = int_local_ip;
-		big_endian_store(local_ip, readable_local_ip);
+		big_endian_store_udp(local_ip, readable_local_ip);
     	//inet_ntop(AF_INET6, &ipv6_local, readable_local_ip, INET_ADDRSTRLEN);
 		printf("\treadable format: %s\t%d\n",readable_local_ip, int_local_port);		//result
 		
@@ -121,7 +119,7 @@ void read_net_tcp_v6(int socket){
 
 }
 
-void big_endian_store(char *socket_ipv6, char *readable_ipv6){
+void big_endian_store_udp(char *socket_ipv6, char *readable_ipv6){
 	struct sockaddr_in6 rem_info;
 	struct in6_addr sin6_addr;
 	for (int i = 0 ; i < 16 ; i++) {
