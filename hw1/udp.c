@@ -6,7 +6,7 @@
 #include <arpa/inet.h>*/
 #include "udp.h"
 
-void read_net_udp_v4(int socket){
+void read_net_udp_v4(){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -60,7 +60,7 @@ void read_net_udp_v4(int socket){
 	return;
 }
 
-void read_net_udp_v6(int socket){
+void read_net_udp_v6(){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -133,3 +133,4 @@ void big_endian_store_udp(char *socket_ipv6, char *readable_ipv6){
 	inet_ntop(AF_INET6, &(sin6_addr), readable_ipv6, INET6_ADDRSTRLEN);
 	return;
 }
+

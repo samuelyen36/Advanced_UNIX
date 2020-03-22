@@ -5,8 +5,9 @@
 #include <dirent.h>
 #include <arpa/inet.h>*/
 #include "tcp.h"
+#include "traverse.h"
 
-void read_net_tcp_v4(int socket){
+void read_net_tcp_v4(){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -18,6 +19,9 @@ void read_net_tcp_v4(int socket){
 	unsigned int int_local_ip, int_local_port, int_des_ip, int_des_port;
 	char readable_local_ip[20], readable_des_ip[20];
 	struct in_addr ipv4_local,ipv4_des;
+	char buf[100];
+	
+	printf("List of TCP connections:\nProtocol%5sLocal Address%20sForeign Address%20sPID/Program name and arguments\n"," "," "," ");
 	fp = fopen("/proc/net/tcp","r");
 	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
@@ -43,15 +47,49 @@ void read_net_tcp_v4(int socket){
 			des_port[i] = des[i+9];
 		}
 
-		printf("%s\t%s\t%s\t%s\t%s",local_ip,local_port,des_ip,des_port,inode_str);
+		//printf("%s\t%s\t%s\t%s\t%s",local_ip,local_port,des_ip,des_port,inode_str);
+
 		int_local_ip = (unsigned int)strtol(local_ip, NULL, 16);
     	int_local_port = (unsigned int)strtol(local_port, NULL, 16);
 
+		int_des_ip = (unsigned int)strtol(des_ip, NULL, 16);
+    	int_des_port = (unsigned int)strtol(des_port, NULL, 16);
+
+
 		ipv4_local.s_addr = int_local_ip;
     	inet_ntop(AF_INET, &ipv4_local, readable_local_ip, INET_ADDRSTRLEN);
-		printf("\t%s\t%d\n",readable_local_ip, int_local_port);		//result
-		
+		ipv4_local.s_addr = int_des_ip;
+    	inet_ntop(AF_INET, &ipv4_local, readable_des_ip, INET_ADDRSTRLEN);
 
+		//printf("\t%s\t%d\n",readable_local_ip, int_local_port);		//result
+		//printf("%s%10s%s","TCP"," ",readable_local_ip);	//TCP   local_ip
+		if(int_local_port==0){
+			sprintf(buf,"%s%10s%s:%s","TCP"," ",readable_local_ip,"*");
+			printf("%-45s",buf);
+			//printf("%s%10s%s:%s","TCP"," ",readable_local_ip,"*");
+		}
+		else{
+			sprintf(buf,"%s%10s%s:%d","TCP"," ",readable_local_ip,int_local_port);
+			printf("%-45s",buf);
+			//printf("%s%10s%s:%d","TCP"," ",readable_local_ip,int_local_port);
+		}
+
+		if(int_des_port==0){
+			sprintf(buf,"%s:%s",readable_des_ip,"*");
+			printf("%-45s",buf);
+			//printf("%s:%s",readable_des_ip,"*");
+		}
+		else{
+			sprintf(buf,"%s:%d",readable_des_ip,int_des_port);
+			printf("%-45s",buf);
+			//printf("%s:%d",readable_des_ip,int_des_port);
+		}
+		//TODO: send atoi(inode_str) to trasersal function
+
+		if(atoi(inode_str)!=0){
+			traverse_proc_pid(atoi(inode_str));
+		}
+		printf("\n");
 
 		while(c=fgetc(fp) != '\n'){
 			continue;
@@ -61,7 +99,7 @@ void read_net_tcp_v4(int socket){
 	return;
 }
 
-void read_net_tcp_v6(int socket){
+void read_net_tcp_v6(){
 	FILE *fp;
 	char inode_str[100]="\0";
 	char trash[100];
@@ -72,7 +110,9 @@ void read_net_tcp_v6(int socket){
 	int tcp_inode;
 	unsigned int int_local_ip, int_local_port, int_des_ip, int_des_port;
 	char readable_local_ip[40], readable_des_ip[40];
+	char buf[100];
 	struct in6_addr ipv6_local,ipv6_des;
+	printf("List of TCP6 connections:\nProtocol%5sLocal Address%20sForeign Address%20sPID/Program name and arguments\n"," "," "," ");
 	fp = fopen("/proc/net/tcp6","r");
 	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
@@ -101,16 +141,37 @@ void read_net_tcp_v6(int socket){
 		}
 
 		//printf("%s\t%s\t%s\n",local,des,inode_str);
-		printf("%s\t%s\t%s\t%s\t%s",local_ip,local_port,des_ip,des_port,inode_str);
-		//int_local_ip = (unsigned int)strtol(local_ip, NULL, 16);
+		//printf("%s\t%s\t%s\t%s\t%s",local_ip,local_port,des_ip,des_port,inode_str);
     	int_local_port = (unsigned int)strtol(local_port, NULL, 16);
-
+		int_des_port = (unsigned int)strtol(des_port, NULL, 16);
 
 
 		//ipv6_local.s6_addr = int_local_ip;
 		big_endian_store(local_ip, readable_local_ip);
-    	//inet_ntop(AF_INET6, &ipv6_local, readable_local_ip, INET_ADDRSTRLEN);
-		printf("\treadable format: %s\t%d\n",readable_local_ip, int_local_port);		//result
+		big_endian_store(des_ip,readable_des_ip);
+
+		if(int_local_port==0){
+			sprintf(buf,"%s%8s%s:%s","TCP6"," ",readable_local_ip,"*");
+			printf("%-45s",buf);
+			//printf("%s%8s%s:%-34s\t","TCP6"," ",readable_local_ip,"*");
+		}
+		else{
+			sprintf(buf,"%s%8s%s:%d","TCP6"," ",readable_local_ip,int_local_port);
+			printf("%-45s",buf);
+			//printf("%s%8s%s:%-34d\t","TCP6"," ",readable_local_ip,int_local_port);
+		}
+
+		if(int_des_port==0){
+			sprintf(buf,"%s:%s",readable_des_ip,"*");
+			printf("%-45s",buf);
+			//printf("%s:%-34s\t",readable_des_ip,"*");
+		}
+		else{
+			sprintf(buf,"%s:%d",readable_des_ip,int_des_port);
+			printf("%-45s",buf);
+			//printf("%s:%-34d\t",readable_des_ip,int_des_port);
+		}
+		printf("\n");
 		
 		while(c=fgetc(fp) != '\n'){
 			continue;
@@ -135,3 +196,6 @@ void big_endian_store(char *socket_ipv6, char *readable_ipv6){
 	inet_ntop(AF_INET6, &(sin6_addr), readable_ipv6, INET6_ADDRSTRLEN);
 	return;
 }
+
+
+/*-------------------------------------*/
