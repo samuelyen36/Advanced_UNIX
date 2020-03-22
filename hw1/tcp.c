@@ -171,6 +171,11 @@ void read_net_tcp_v6(){
 			printf("%-45s",buf);
 			//printf("%s:%-34d\t",readable_des_ip,int_des_port);
 		}
+
+		if(atoi(inode_str)!=0){
+			traverse_proc_pid(atoi(inode_str));
+		}
+
 		printf("\n");
 		
 		while(c=fgetc(fp) != '\n'){

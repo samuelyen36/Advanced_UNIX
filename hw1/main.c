@@ -50,7 +50,8 @@ int main(int argc, char **argv){
 		}
 	}
 
-	read_net_tcp_v4();
+	//read_net_tcp_v4();
+	read_net_udp_v6();
 
 	if(!filtering_stirng){
 		free(filtering_stirng);
