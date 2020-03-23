@@ -1,10 +1,12 @@
 #include "traverse.h"
 
-void traverse_proc_pid(int socket){	//traverse through /process/pid/fd, and find the entry which meets the socket number
+void traverse_proc_pid(int socket,char *ip_detail){	//traverse through /process/pid/fd, and find the entry which meets the socket number
 	//printf("entering traverse\n");
 	const char *path_prefix = "/proc";
 	DIR *dir_ptr;
 	struct dirent *direntp;
+	int res=1;
+	int printed=0;
 
 	dir_ptr = opendir(path_prefix);
 	if(dir_ptr == NULL){
@@ -58,9 +60,25 @@ void traverse_proc_pid(int socket){	//traverse through /process/pid/fd, and find
 							if(atoi(num)==socket){   /*do the check on socket number here*/
 								char tmp_dir[50]="/proc/";
 								strcat(tmp_dir,direntp->d_name);
-								printf("%s/",direntp->d_name);
-								print_process_information(tmp_dir);
-								print_process_parameter(tmp_dir);
+								if(filtering_string_flag==0){		//do not filter string
+									printf("%s",ip_detail);
+									printf("%s/",direntp->d_name);		//pid
+									print_process_information(tmp_dir);
+									print_process_parameter(tmp_dir);
+									printf("\n");
+									printed=1;
+								}
+								else{		//do have to check filtering string
+									res=judge_format_string(tmp_dir);
+									if(res==1){
+										printf("%s",ip_detail);
+										printf("%s/",direntp->d_name);		//pid
+										print_process_information(tmp_dir);
+										print_process_parameter(tmp_dir);
+										printf("\n");
+										printed=1;
+									}
+								}
 							}
 						}
 					}
@@ -70,6 +88,9 @@ void traverse_proc_pid(int socket){	//traverse through /process/pid/fd, and find
 			}
 		}
 		closedir(dir_ptr);
+	}
+	if(printed==0 && filtering_string_flag==0){		//no filtering and not printed above(no process matched)
+		printf("%s\n",ip_detail);
 	}
 }
 
@@ -83,6 +104,47 @@ int is_target(char *str){	//is number&&>1000 => return 1  / else=> return 0
 	}
 	return 1;
 }
+
+int judge_format_string(char *ps_directory){
+	char *file_character=malloc(FILE_LENGTH);
+	char tmp[50];
+	memset(tmp,'\0',50);
+	strcpy(tmp,ps_directory);
+	strcat(tmp,"/comm");
+	FILE *comm_fp;
+	FILE *cmdline_fp;
+	char c;
+	char *ptr_strstr=NULL;
+
+	memset(file_character,'\0',FILE_LENGTH);
+	comm_fp = fopen(tmp,"r");
+
+	while((c=fgetc(comm_fp))!=EOF){
+		file_character[strlen(file_character)]=c;
+	}
+	ptr_strstr = strstr(file_character,filtering_string_content);
+	if(ptr_strstr!=NULL){
+		return 1;
+	}
+
+	ptr_strstr=NULL;
+	fclose(comm_fp);
+	memset(file_character,'\0',FILE_LENGTH);
+	memset(tmp,'\0',50);
+	strcpy(tmp,ps_directory);
+	strcat(tmp,"/cmdline");
+
+	cmdline_fp = fopen(tmp,"r");
+	while((c=fgetc(cmdline_fp))!=EOF){
+		file_character[strlen(file_character)]=c;
+	}
+	ptr_strstr = strstr(file_character,filtering_string_content);
+	if(ptr_strstr!=NULL){
+		return 1;
+	}
+	return 0;
+}
+
 
 void print_process_information(char *ps_directory){		//send /proc/$pid, print the content in /proc/$pid/comm
 	char tmp[50];

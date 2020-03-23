@@ -87,13 +87,13 @@ void read_net_udp_v4(){
 		}
 
 		sprintf(whole_buf,"%-45s%-45s",buf1,buf2);
-		printf("%s",whole_buf);
+		//printf("%s",whole_buf);
 
 		if(atoi(inode_str)!=0){
-			traverse_proc_pid(atoi(inode_str));
+			traverse_proc_pid(atoi(inode_str),whole_buf);
 		}
 
-		printf("\n");
+		//printf("\n");
 		while(c=fgetc(fp) != '\n'){
 			continue;
 		}
@@ -179,12 +179,12 @@ void read_net_udp_v6(){
 		}
 
 		sprintf(whole_buf,"%-45s%-45s",buf1,buf2);
-		printf("%s",whole_buf);
+		//printf("%s",whole_buf);
 
 		if(atoi(inode_str)!=0){
-			traverse_proc_pid(atoi(inode_str));
+			traverse_proc_pid(atoi(inode_str),whole_buf);
 		}
-		printf("\n");
+		//printf("\n");
 		while(c=fgetc(fp) != '\n'){
 			continue;
 		}

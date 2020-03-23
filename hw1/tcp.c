@@ -88,11 +88,12 @@ void read_net_tcp_v4(){
 		}
 		//TODO: send atoi(inode_str) to trasersal function
 		sprintf(whole_buf,"%-45s%-45s",buf1,buf2);
-		printf("%s",whole_buf);
+		//printf("%s",whole_buf);
+		
 		if(atoi(inode_str)!=0){
-			traverse_proc_pid(atoi(inode_str));
+			traverse_proc_pid(atoi(inode_str),whole_buf);
 		}
-		printf("\n");
+		//printf("\n");
 
 		while(c=fgetc(fp) != '\n'){
 			continue;
@@ -180,15 +181,15 @@ void read_net_tcp_v6(){
 			//printf("%-45s",buf);
 			//printf("%s:%-34d\t",readable_des_ip,int_des_port);
 		}
-		
+
 		sprintf(whole_buf,"%-45s%-45s",buf1,buf2);
-		printf("%s",whole_buf);
+		//printf("%s",whole_buf);
 
 		if(atoi(inode_str)!=0){
-			traverse_proc_pid(atoi(inode_str));
+			traverse_proc_pid(atoi(inode_str),whole_buf);
 		}
 
-		printf("\n");
+		//printf("\n");
 		
 		while(c=fgetc(fp) != '\n'){
 			continue;
