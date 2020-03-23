@@ -60,6 +60,7 @@ void traverse_proc_pid(int socket){	//traverse through /process/pid/fd, and find
 								strcat(tmp_dir,direntp->d_name);
 								printf("%s/",direntp->d_name);
 								print_process_information(tmp_dir);
+								print_process_parameter(tmp_dir);
 							}
 						}
 					}
@@ -84,9 +85,11 @@ int is_target(char *str){	//is number&&>1000 => return 1  / else=> return 0
 }
 
 void print_process_information(char *ps_directory){		//send /proc/$pid, print the content in /proc/$pid/comm
-	strcat(ps_directory,"/comm");		//   /proc/pid/comm
+	char tmp[50];
+	strcpy(tmp,ps_directory);
+	strcat(tmp,"/comm");		//   /proc/pid/comm
 	FILE *comm_fp;
-	comm_fp = fopen(ps_directory,"r");
+	comm_fp = fopen(tmp,"r");
     
 	char c = fgetc(comm_fp); 
     while (c != EOF) 
@@ -97,7 +100,33 @@ void print_process_information(char *ps_directory){		//send /proc/$pid, print th
         c = fgetc(comm_fp); 
     } 
 
-	//printf("\n");
 	fclose(comm_fp);
+	return;
+}
+
+void print_process_parameter(char *ps_directory){		//send /proc/$pid, print the content in /proc/$pid/comm
+	char tmp[50];
+	strcpy(tmp,ps_directory);
+	strcat(tmp,"/cmdline");		//   /proc/pid/comm
+	FILE *cmdline_fp;
+	cmdline_fp = fopen(tmp,"r");
+	char c = fgetc(cmdline_fp);
+
+	while(c!=' '){		//discard the first part, which is the same as /proc/$pid/comm
+		c = fgetc(cmdline_fp);
+		if(c==EOF){
+			return;
+		}
+	}
+	printf(" ");
+	while(1){
+		c=fgetc(cmdline_fp);
+		if(c!=EOF && c!='\n'){
+			printf("%c",c);
+		}
+		else{
+			break;
+		}
+	}
 	return;
 }

@@ -95,7 +95,8 @@ void read_net_tcp_v4(){
 			continue;
 		}
 	}
-	
+	fclose(fp);
+	printf("\n");
 	return;
 }
 
@@ -182,7 +183,8 @@ void read_net_tcp_v6(){
 			continue;
 		}
 	}
-	
+	printf("\n");
+	fclose(fp);
 	return;
 
 }
