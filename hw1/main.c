@@ -56,7 +56,7 @@ int main(int argc, char **argv){
 		}
 	}
 
-	/*if(udp_opt==1 && tcp_opt==0){		//only udp
+	if(udp_opt==1 && tcp_opt==0){		//only udp
 		read_net_udp_v4();
 		read_net_udp_v6();
 	}
@@ -69,11 +69,11 @@ int main(int argc, char **argv){
 		read_net_tcp_v6();
 		read_net_udp_v4();
 		read_net_udp_v6();
-	}*/
+	}
 
 
-	read_net_tcp_v4();
-	read_net_udp_v4();
+	/*read_net_tcp_v4();
+	read_net_udp_v4();*/
 
 
 	return 0;
