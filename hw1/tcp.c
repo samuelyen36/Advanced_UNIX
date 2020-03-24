@@ -24,7 +24,7 @@ void read_net_tcp_v4(){
 	
 	printf("List of TCP connections:\nProtocol%5sLocal Address%20sForeign Address%20sPID/Program name and arguments\n"," "," "," ");
 	fp = fopen("/proc/net/tcp","r");
-	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
+	fscanf(fp,"%s %s %s",trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
 			continue;
 	}
@@ -96,6 +96,11 @@ void read_net_tcp_v4(){
 		//printf("\n");
 
 		while(c=fgetc(fp) != '\n'){
+			if(c==EOF){
+				fclose(fp);
+				printf("\n");
+				return;
+			}
 			continue;
 		}
 	}
@@ -120,7 +125,7 @@ void read_net_tcp_v6(){
 	struct in6_addr ipv6_local,ipv6_des;
 	printf("List of TCP6 connections:\nProtocol%5sLocal Address%20sForeign Address%20sPID/Program name and arguments\n"," "," "," ");
 	fp = fopen("/proc/net/tcp6","r");
-	fscanf(fp,"%s %s %s %s %s %s %s %s %s %s %s %s",trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash,trash);		//first row, which is comment;
+	fscanf(fp,"%s %s %s",trash,trash,trash);		//first row, which is comment;
 	while(c=fgetc(fp) != '\n'){
 			continue;
 	}
@@ -192,13 +197,17 @@ void read_net_tcp_v6(){
 		//printf("\n");
 		
 		while(c=fgetc(fp) != '\n'){
+			if(c==EOF){
+				fclose(fp);
+				printf("\n");
+				return;
+			}
 			continue;
 		}
 	}
 	printf("\n");
 	fclose(fp);
 	return;
-
 }
 
 void big_endian_store(char *socket_ipv6, char *readable_ipv6){

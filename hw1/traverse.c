@@ -108,6 +108,7 @@ int is_target(char *str){	//is number&&>1000 => return 1  / else=> return 0
 int judge_format_string(char *ps_directory){
 	char *file_character=malloc(FILE_LENGTH);
 	char tmp[50];
+	regex_t reg;
 	memset(tmp,'\0',50);
 	strcpy(tmp,ps_directory);
 	strcat(tmp,"/comm");
@@ -115,17 +116,37 @@ int judge_format_string(char *ps_directory){
 	FILE *cmdline_fp;
 	char c;
 	char *ptr_strstr=NULL;
+	int status;
+	regmatch_t pmatch[1];
 
+	int z=regcomp(&reg,filtering_string_content,REG_EXTENDED);
+	if(z!=0){
+		char ebuf[20];
+		regerror(z,&reg,ebuf,sizeof(ebuf));
+		printf("error compiling regular expression: %s\n",ebuf);
+		exit(0);
+	}		//regular expression
 	memset(file_character,'\0',FILE_LENGTH);
 	comm_fp = fopen(tmp,"r");
 
 	while((c=fgetc(comm_fp))!=EOF){
 		file_character[strlen(file_character)]=c;
 	}
-	ptr_strstr = strstr(file_character,filtering_string_content);
-	if(ptr_strstr!=NULL){
+
+	status = regexec(&reg,file_character,(size_t)1,pmatch,0);
+	if(status == REG_NOMATCH){		//RE no match
+		//printf("no match\n");
+		
+	}
+	if(status==0){		//RE match
+		//printf("matched\n");
 		return 1;
 	}
+
+	/*ptr_strstr = strstr(file_character,filtering_string_content);
+	if(ptr_strstr!=NULL){
+		return 1;
+	}*/
 
 	ptr_strstr=NULL;
 	fclose(comm_fp);
@@ -138,10 +159,19 @@ int judge_format_string(char *ps_directory){
 	while((c=fgetc(cmdline_fp))!=EOF){
 		file_character[strlen(file_character)]=c;
 	}
-	ptr_strstr = strstr(file_character,filtering_string_content);
-	if(ptr_strstr!=NULL){
+	status = regexec(&reg,file_character,(size_t)1,pmatch,0);
+	if(status == REG_NOMATCH){		//RE no match
+		//printf("no match\n");
+	}
+	if(status==0){		//RE match
+		//printf("matched\n");
 		return 1;
 	}
+
+	/*ptr_strstr = strstr(file_character,filtering_string_content);
+	if(ptr_strstr!=NULL){
+		return 1;
+	}*/
 	return 0;
 }
 

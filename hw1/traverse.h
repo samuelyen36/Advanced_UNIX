@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <string.h>
 #include <dirent.h>
+#include <regex.h>
 
 #define FILE_LENGTH 500
 
