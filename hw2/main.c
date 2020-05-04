@@ -31,6 +31,10 @@ int open(const char *file, int oflag, ...);
 DIR *opendir();
 ssize_t readlink();
 int rename();
+int rmdir();
+int __xstat ();
+int symlink();
+int unlink();
 
 void write_to_terminal(char *buf){  //write directly to terminal, which means that it wouldn't be redirected
     ssize_t return_write=-1;
@@ -69,8 +73,7 @@ int check_escape_path(const char *buf1,const char *buf2){       //buf1 is curren
     return(strncmp(buf1,tmp,strlen(buf1)));
 }
 
-int chdir (const char *path)
-{
+int chdir (const char *path){
     initial();
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
@@ -89,12 +92,10 @@ int chdir (const char *path)
         printf( "# chdir(\"%s\") = %d\n", path, return_val);
     }
     else printf("chdir() error\n");
-    printf("run our own version successfully\n");
     return return_val;
 }
 
-DIR *opendir (const char *path)
-{
+DIR *opendir (const char *path){
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     DIR* return_val=NULL;
@@ -112,7 +113,6 @@ DIR *opendir (const char *path)
         printf( "# opendir(\"%s\") = %p\n", path, return_val);
     }
     else printf("opendir() error\n");
-    printf("run our own version of opendir successfully\n");
     return return_val;
 }
 
@@ -132,7 +132,6 @@ int chmod(const char *path, mode_t mode){
         printf( "# chmod(\"%s\") = %d\n", path, return_val);
     }
     else printf("chdir() error\n");
-    printf("run our own version of chmod successfully\n");
     return return_val;
 }
 
@@ -174,7 +173,6 @@ int creat (const char *file, mode_t mode){
         printf( "# creat(\"%s\") = %d\n", file, return_val);
     }
     else printf("creat() error\n");
-    printf("run our own version of creat successfully\n");
     return return_val;
 
 }
@@ -200,7 +198,6 @@ FILE *fopen(const char * __filename, const char * __modes){
         printf( "# fopen(\"%s\") \n", __filename);
     }
     else printf("fopen() error\n");
-    printf("run our own version of fopen successfully\n");
     return return_val;
 }
 
@@ -318,7 +315,7 @@ ssize_t readlink(const char *path, char *buf, size_t len){
     if(origin != NULL) {
         return_val = origin(path,buf,len);
     }
-    else write(STDOUT_FILENO,"open error\n",strlen("open error\n"));
+    else write(STDOUT_FILENO,"readlink error\n",strlen("readlink error\n"));
     return return_val;
 }
 
@@ -353,7 +350,118 @@ int rename(const char *old, const char *new){
     if(origin != NULL) {
         return_val = origin(old,new);
     }
-    else write(STDOUT_FILENO,"rename error\n",strlen("open error\n"));
+    else write(STDOUT_FILENO,"rename error\n",strlen("rename error\n"));
+    return return_val;
+}
+
+int rmdir(const char *path){
+    int (*origin)(const char *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+    
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
+        if(check_escape_path(buf_curpath,path)!=0 ){
+                char *err_msg = "rmdir: try to escape from sandbox: ";
+                char out_buf[128];
+                sprintf(out_buf,"%s %s\n",err_msg,path);
+                write_to_terminal(out_buf);
+                return return_val;
+        }
+    }
+
+    origin = dlsym(RTLD_NEXT, "rmdir");
+    if(origin != NULL) {
+        return_val = origin(path);
+    }
+    else write(STDOUT_FILENO,"rmdir error\n",strlen("rmdir error\n"));
+    return return_val;
+}
+
+int __xstat (int vers, const char *name, struct stat *buf){
+    int (*origin)(int, const char *, struct stat *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+    
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+        if(check_escape_path(buf_curpath,name)!=0 ){
+                char *err_msg = "stat: try to escape from sandbox: ";
+                char out_buf[128];
+                sprintf(out_buf,"%s %s\n",err_msg,name);
+                write_to_terminal(out_buf);
+                return return_val;
+        }
+    }
+    
+    origin = dlsym(RTLD_NEXT, "__lxstat");
+    if(origin != NULL) {
+        return_val = origin(vers, name, buf);
+    }
+    else write(STDOUT_FILENO,"stat error\n",strlen("stat error\n"));
+    return return_val;
+}
+
+int symlink(const char *from, const char *to){
+    int (*origin)(const char *, const char *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+    
+    if(strncmp(from,"./",2)==0 || strncmp(from,"../",3)==0 || from[0]=='/'){
+        if(check_escape_path(buf_curpath,from)!=0 ){
+                char *err_msg = "symlink: try to escape from sandbox: ";
+                char out_buf[128];
+                sprintf(out_buf,"%s %s\n",err_msg,from);
+                write_to_terminal(out_buf);
+                return return_val;
+        }
+    }
+
+    if(strncmp(to,"./",2)==0 || strncmp(to,"../",3)==0 || to[0]=='/'){
+        if(check_escape_path(buf_curpath,to)!=0 ){
+                char *err_msg = "symlink: try to escape from sandbox: ";
+                char out_buf[128];
+                sprintf(out_buf,"%s %s\n",err_msg,to);
+                write_to_terminal(out_buf);
+                return return_val;
+        }
+    }
+
+    origin = dlsym(RTLD_NEXT, "symlink");
+    if(origin != NULL) {
+        return_val = origin(from,to);
+    }
+    else write(STDOUT_FILENO,"symlink error\n",strlen("symlink error\n"));
     return return_val;
 
+}
+
+
+int unlink(const char *name){
+    int (*origin)(const char *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+    
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+        if(check_escape_path(buf_curpath,name)!=0 ){
+                char *err_msg = "unlink: try to escape from sandbox: ";
+                char out_buf[128];
+                sprintf(out_buf,"%s %s\n",err_msg,name);
+                write_to_terminal(out_buf);
+                return return_val;
+        }
+    }
+
+    origin = dlsym(RTLD_NEXT, "unlink");
+    if(origin != NULL) {
+        return_val = origin(name);
+    }
+    else write(STDOUT_FILENO,"unlink error\n",strlen("unlink error\n"));
+    return return_val;
 }
