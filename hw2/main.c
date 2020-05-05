@@ -35,6 +35,15 @@ int rmdir();
 int __xstat ();
 int symlink();
 int unlink();
+/*-----------------always reject the following parts--------------*/
+int execl (const char *path, const char *arg, ...); 
+int execle (const char *path, const char *arg, ...);
+int execlp (const char *file, const char *arg, ...);
+int execv (const char *path, char *const argv[]);
+int execve (const char *path, char *const argv[], char *const envp[]);
+int execvp (const char *file, char *const argv[]);
+int system (const char *line);
+/*/*-----------------always reject the above parts--------------*/
 
 void write_to_terminal(char *buf){  //write directly to terminal, which means that it wouldn't be redirected
     ssize_t return_write=-1;
@@ -464,4 +473,46 @@ int unlink(const char *name){
     }
     else write(STDOUT_FILENO,"unlink error\n",strlen("unlink error\n"));
     return return_val;
+}
+
+int execl (const char *path, const char *arg, ...){
+    char *err_msg = "[sandbox]: sandbox always reject execl\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int execle (const char *path, const char *arg, ...){
+    char *err_msg = "[sandbox]: sandbox always reject execle\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int execlp (const char *file, const char *arg, ...){
+    char *err_msg = "[sandbox]: sandbox always reject execlp\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int execv (const char *path, char *const argv[]){
+    char *err_msg = "[sandbox]: sandbox always reject execv\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int execve (const char *path, char *const argv[], char *const envp[]){
+    char *err_msg = "[sandbox]: sandbox always reject execve\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int execvp (const char *file, char *const argv[]){
+    char *err_msg = "[sandbox]: sandbox always reject execvp\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
+}
+
+int system (const char *line){
+    char *err_msg = "[sandbox]: sandbox always reject system\n";
+    write_to_terminal(err_msg);
+    return -1;  //reject and fail this command
 }
