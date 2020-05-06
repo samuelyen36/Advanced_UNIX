@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -shared -fPIC -g
-PRELOAD = ourown.so
+PRELOAD = sandbox.so
 
 all = $(PRELOAD)
 
