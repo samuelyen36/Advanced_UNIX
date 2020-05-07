@@ -12,9 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-FILE *_fp;
 char *empty = "";
-int (*origin_fprintf)(FILE *, const char *, ...) = NULL;
 
 void write_to_terminal();
 
@@ -62,20 +60,6 @@ void write_to_terminal(char *buf){  //write directly to terminal, which means th
     return;
     //const char *file, int oflag,
     //int fd, const void *buf, size_t nbytes
-}
-
-void initial(void){
-    const char* env_var = getenv("MONITOR_OUTPUT");
-    FILE* (*origin)(char const *, char const *) = NULL;
-    origin = dlsym(RTLD_NEXT, "fopen");
-    if(origin != NULL && env_var != NULL) {
-        _fp = origin(env_var, "wt");
-    }
-    else _fp = stderr;
-    origin_fprintf = dlsym(RTLD_NEXT, "fprintf");
-    //origin_fprintf(_fp,"rewrite fprintf done\n");
-    
-    //printf("rewrite fprintf done: %p\n",stderr);
 }
 
 int check_escape_path(const char *buf1,const char *buf2){       //buf1 is current(absolute) and buf2 can be relative(usually input of function)
@@ -515,49 +499,49 @@ int unlink(const char *name){
 
 int execl (const char *path, const char *arg, ...){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execl(%s): not allowed",path);
+    sprintf(err_msg,"[sandbox] execl(%s): not allowed\n",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execle (const char *path, const char *arg, ...){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execle(%s): not allowed",path);
+    sprintf(err_msg,"[sandbox] execle(%s): not allowed\n",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execlp (const char *file, const char *arg, ...){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execlp(%s): not allowed",file);
+    sprintf(err_msg,"[sandbox] execlp(%s): not allowed\n",file);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execv (const char *path, char *const argv[]){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execv(%s): not allowed",path);
+    sprintf(err_msg,"[sandbox] execv(%s): not allowed\n",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execve (const char *path, char *const argv[], char *const envp[]){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execve(%s): not allowed",path);
+    sprintf(err_msg,"[sandbox] execve(%s): not allowed\n",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execvp (const char *file, char *const argv[]){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] execvp(%s): not allowed",file);
+    sprintf(err_msg,"[sandbox] execvp(%s): not allowed\n",file);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int system (const char *line){
     char err_msg[128];
-    sprintf(err_msg,"[sandbox] system(%s): not allowed",line);
+    sprintf(err_msg,"[sandbox] system(%s): not allowed\n",line);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
