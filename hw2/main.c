@@ -33,6 +33,7 @@ ssize_t readlink();
 int rename();
 int rmdir();
 int __xstat ();
+int __lxstat ();
 int symlink();
 int unlink();
 /*-----------------always reject the following parts--------------*/
@@ -44,6 +45,8 @@ int execve (const char *path, char *const argv[], char *const envp[]);
 int execvp (const char *file, char *const argv[]);
 int system (const char *line);
 /*/*-----------------always reject the above parts--------------*/
+
+//[sandbox] ??: access to %s is not allowed\n
 
 void write_to_terminal(char *buf){  //write directly to terminal, which means that it wouldn't be redirected
     ssize_t return_write=-1;
@@ -70,7 +73,6 @@ void initial(void){
     }
     else _fp = stderr;
     origin_fprintf = dlsym(RTLD_NEXT, "fprintf");
-    printf("addr to output device: %p\n",_fp);
     //origin_fprintf(_fp,"rewrite fprintf done\n");
     
     //printf("rewrite fprintf done: %p\n",stderr);
@@ -98,22 +100,19 @@ int check_escape_path(const char *buf1,const char *buf2){       //buf1 is curren
 }
 
 int chdir (const char *path){
-    initial();
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     int return_val=-1;
     int (*origin)(const char *) = NULL;
     if(check_escape_path(buf,path)!=0){    //escape
-        char *err_msg = "chdir: try to escape from sandbox\n";
-        //write(STDERR_FILENO,err_msg,strlen(err_msg));
-        fprintf(stderr,"chdir: nonono, try to escape from sandbox\n");
-        //origin_fprintf(_fp,"chdir: nonono, try to escape from sandbox\n");
+        char tmp[128];
+        sprintf(tmp,"[sandbox] chdir: access to %s is not allowed\n",path);
+        write_to_terminal(tmp);
         return return_val;
     }
     origin = dlsym(RTLD_NEXT, "chdir");
     if(origin != NULL) {
         return_val = origin(path);
-        printf( "# chdir(\"%s\") = %d\n", path, return_val);
     }
     else printf("chdir() error\n");
     return return_val;
@@ -125,16 +124,15 @@ DIR *opendir (const char *path){
     DIR* return_val=NULL;
     DIR* (*origin)(const char *) = NULL;
     if(check_escape_path(buf,path)!=0){    //escape
-        char *err_msg = "opendir: try to escape from sandbox\n";
+        char err_msg[128];
+        memset(err_msg,'\0',128);
+        sprintf(err_msg,"[sandbox] opendir: access to %s is not allowed\n",path);
         write_to_terminal(err_msg);
-        //write(STDERR_FILENO,err_msg,strlen(err_msg));
-        //printf("opendir: nonono, try to escape from sandbox\n");
         return return_val;
     }
     origin = dlsym(RTLD_NEXT, "opendir");
     if(origin != NULL) {
         return_val = origin(path);
-        //printf( "# opendir(\"%s\") = %p\n", path, return_val);
     }
     else printf("opendir() error\n");
     return return_val;
@@ -146,8 +144,9 @@ int chmod(const char *path, mode_t mode){
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     if(check_escape_path(buf,path)!=0){    //escape
-        char *err_msg = "chmod: try to escape from sandbox\n";
-        write(STDERR_FILENO,err_msg,strlen(err_msg));
+        char err_msg[128];
+        sprintf(err_msg,"[sandbox] chmod: access to %s is not allowed\n",path);
+        write_to_terminal(err_msg);
         return return_val;
     }
     origin = dlsym(RTLD_NEXT, "chmod");
@@ -155,7 +154,7 @@ int chmod(const char *path, mode_t mode){
         return_val = origin(path,mode);
         //printf( "# chmod(\"%s\") = %d\n", path, return_val);
     }
-    else printf("chdir() error\n");
+    else printf("chmod() error\n");
     return return_val;
 }
 
@@ -165,17 +164,17 @@ int chown(const char *file, uid_t owner, gid_t group){        //think about how 
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     if(check_escape_path(buf,file)!=0){    //escape
-        char *err_msg = "chmod: try to escape from sandbox\n";
-        write(STDERR_FILENO,err_msg,strlen(err_msg));        
+        char err_msg[128];
+        memset(err_msg,'\0',128);
+        sprintf(err_msg,"[sandbox] chown: access to %s is not allowed\n",file);
+        write_to_terminal(err_msg);
         return return_val;
     }
     origin = dlsym(RTLD_NEXT, "chown");
     if(origin != NULL) {
         return_val = origin(file,owner,group);
-        //printf( "# chown(\"%s\") = %d\n", file, return_val);
     }
     else printf("chown() error\n");
-    //printf("run our own version of chown successfully\n");
     return return_val;
 }
 
@@ -186,8 +185,10 @@ int creat (const char *file, mode_t mode){
         char buf[64];
         getcwd(buf, sizeof(buf));   //get current absolute path
         if(check_escape_path(buf,file)!=0){    //escape
-            char *err_msg = "creat: try to escape from sandbox\n";
-            write(STDERR_FILENO,err_msg,strlen(err_msg));        
+            char err_msg[128];
+            memset(err_msg,'\0',128);
+            sprintf(err_msg,"[sandbox] creat: access to %s is not allowed\n",file);
+            write_to_terminal(err_msg);
             return return_val;
         }
     }
@@ -208,9 +209,9 @@ FILE *fopen(const char * __filename, const char * __modes){
         char buf[64];
         getcwd(buf, sizeof(buf));   //get current absolute path
         if(check_escape_path(buf,__filename)!=0){    //escape
-            char *err_msg = "fopen: try to escape from sandbox: ";
+            char *err_msg = "[sandbox] fopen: access to";
             char out_buf[128];
-            sprintf(out_buf,"%s %s\n",err_msg,__filename);
+            sprintf(out_buf,"%s %s is not allowed\n",err_msg,__filename);
             write_to_terminal(out_buf);
             //write(STDERR_FILENO,out_buf,strlen(out_buf));        
             return return_val;
@@ -233,9 +234,9 @@ int link(const char *oldpath, const char *newpath) {
     
     if(strncmp(oldpath,"./",2)==0 || strncmp(oldpath,"../",3)==0 || oldpath[0]=='/'){
         if(check_escape_path(buf,oldpath)!=0 ){
-                char *err_msg = "link: try to escape from sandbox: ";
+                char *err_msg = "[sandbox] link: access to: ";
                 char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,oldpath);
+                sprintf(out_buf,"%s %s is not allowed\n",err_msg,oldpath);
                 write_to_terminal(out_buf);
                 //write(STDERR_FILENO,out_buf,strlen(out_buf));        
                 return return_val;
@@ -243,9 +244,9 @@ int link(const char *oldpath, const char *newpath) {
     }
     if(strncmp(newpath,"./",2)==0 || strncmp(newpath,"../",3)==0 || newpath[0]=='/'){
         if(check_escape_path(buf,newpath)!=0 ){
-                char *err_msg = "link: try to escape from sandbox: ";
+                char *err_msg = "[sandbox] link: access to: ";
                 char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,newpath);
+                sprintf(out_buf,"%s %s is not allowed\n",err_msg,newpath);
                 write_to_terminal(out_buf);
                 //write(STDERR_FILENO,out_buf,strlen(out_buf));        
                 return return_val;
@@ -267,11 +268,10 @@ int mkdir(const char *path, mode_t mode){
     
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
         if(check_escape_path(buf,path)!=0 ){
-                char *err_msg = "mkdir: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,path);
-                write_to_terminal(out_buf);
-                //write(STDERR_FILENO,out_buf,strlen(out_buf));        
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] mkdir: access to %s is not allowed\n",path);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -296,11 +296,10 @@ int open(const char *file, int oflag, ...){
     
     if(strncmp(file,"./",2)==0 || strncmp(file,"../",3)==0 || file[0]=='/'){
         if(check_escape_path(buf,file)!=0 ){
-                char *err_msg = "open: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,file);
-                write_to_terminal(out_buf);
-                //write(STDERR_FILENO,out_buf,strlen(out_buf));        
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] open: access to %s is not allowed\n",file);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -327,10 +326,10 @@ ssize_t readlink(const char *path, char *buf, size_t len){
         
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
         if(check_escape_path(buf_curpath,path)!=0 ){
-                char *err_msg = "readlink: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,path);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] readlink: access to %s is not allowed\n",path);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -352,20 +351,20 @@ int rename(const char *old, const char *new){
     
     if(strncmp(old,"./",2)==0 || strncmp(old,"../",3)==0 || old[0]=='/'){
         if(check_escape_path(buf_curpath,old)!=0 ){
-                char *err_msg = "rename: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,old);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] rename: access to %s is not allowed\n",old);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
 
     if(strncmp(new,"./",2)==0 || strncmp(new,"../",3)==0 || new[0]=='/'){
         if(check_escape_path(buf_curpath,new)!=0 ){
-                char *err_msg = "rename: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,new);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] rename: access to %s is not allowed\n",new);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -387,10 +386,10 @@ int rmdir(const char *path){
     
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
         if(check_escape_path(buf_curpath,path)!=0 ){
-                char *err_msg = "rmdir: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,path);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] rmdir: access to %s is not allowed\n",path);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -409,13 +408,38 @@ int __xstat (int vers, const char *name, struct stat *buf){
 
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
-    
+
     if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
         if(check_escape_path(buf_curpath,name)!=0 ){
-                char *err_msg = "stat: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,name);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] stat: access to %s is not allowed\n",name);
+                write_to_terminal(err_msg);
+                return return_val;
+        }
+    }
+    
+    origin = dlsym(RTLD_NEXT, "__xstat");
+    if(origin != NULL) {
+        return_val = origin(vers, name, buf);
+    }
+    else write(STDOUT_FILENO,"stat error\n",strlen("stat error\n"));
+    return return_val;
+}
+
+int __lxstat (int vers, const char *name, struct stat *buf){
+    int (*origin)(int, const char *, struct stat *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+        if(check_escape_path(buf_curpath,name)!=0 ){
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] stat: access to %s is not allowed\n",name);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -437,20 +461,20 @@ int symlink(const char *from, const char *to){
     
     if(strncmp(from,"./",2)==0 || strncmp(from,"../",3)==0 || from[0]=='/'){
         if(check_escape_path(buf_curpath,from)!=0 ){
-                char *err_msg = "symlink: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,from);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] symlink: access to %s is not allowed\n",from);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
 
     if(strncmp(to,"./",2)==0 || strncmp(to,"../",3)==0 || to[0]=='/'){
         if(check_escape_path(buf_curpath,to)!=0 ){
-                char *err_msg = "symlink: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,to);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] symlink: access to %s is not allowed\n",to);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -464,7 +488,6 @@ int symlink(const char *from, const char *to){
 
 }
 
-
 int unlink(const char *name){
     int (*origin)(const char *) = NULL;
     int return_val = -1;
@@ -474,10 +497,10 @@ int unlink(const char *name){
     
     if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
         if(check_escape_path(buf_curpath,name)!=0 ){
-                char *err_msg = "unlink: try to escape from sandbox: ";
-                char out_buf[128];
-                sprintf(out_buf,"%s %s\n",err_msg,name);
-                write_to_terminal(out_buf);
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] unlink: access to %s is not allowed\n",name);
+                write_to_terminal(err_msg);
                 return return_val;
         }
     }
@@ -491,43 +514,50 @@ int unlink(const char *name){
 }
 
 int execl (const char *path, const char *arg, ...){
-    char *err_msg = "[sandbox]: sandbox always reject execl\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execl(%s): not allowed",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execle (const char *path, const char *arg, ...){
-    char *err_msg = "[sandbox]: sandbox always reject execle\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execle(%s): not allowed",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execlp (const char *file, const char *arg, ...){
-    char *err_msg = "[sandbox]: sandbox always reject execlp\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execlp(%s): not allowed",file);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execv (const char *path, char *const argv[]){
-    char *err_msg = "[sandbox]: sandbox always reject execv\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execv(%s): not allowed",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execve (const char *path, char *const argv[], char *const envp[]){
-    char *err_msg = "[sandbox]: sandbox always reject execve\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execve(%s): not allowed",path);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int execvp (const char *file, char *const argv[]){
-    char *err_msg = "[sandbox]: sandbox always reject execvp\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] execvp(%s): not allowed",file);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
 
 int system (const char *line){
-    char *err_msg = "[sandbox]: sandbox always reject system\n";
+    char err_msg[128];
+    sprintf(err_msg,"[sandbox] system(%s): not allowed",line);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
 }
