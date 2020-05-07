@@ -76,10 +76,25 @@ void initial(void){
     //printf("rewrite fprintf done: %p\n",stderr);
 }
 
-int check_escape_path(const char *buf1,const char *buf2){       //buf1 is current(absolute) and buf2 can be revalent(usually input of function)
+int check_escape_path(const char *buf1,const char *buf2){       //buf1 is current(absolute) and buf2 can be relative(usually input of function)
     char tmp[64];
-    realpath(buf2,tmp); //convert relative path to absolute path
-    return(strncmp(buf1,tmp,strlen(buf1)));
+    char abs_self_dir[64];
+    memset(tmp,'\0',64);
+    memset(abs_self_dir,'\0',64);
+    char *dir_from_env;
+    if((dir_from_env=getenv("SELF_DIR")) != NULL ){ //-d flag is set
+        realpath(dir_from_env,abs_self_dir);    //real path of dir_from_env
+        //printf("got env dir with its absolute path: %s\n",abs_self_dir);
+    }
+    realpath(buf2,tmp); //convert relative path to absolute path of accessing address
+
+
+    if(dir_from_env!=NULL){ //return comparison result of dir_self
+        return(strncmp(abs_self_dir,tmp,strlen(abs_self_dir)));
+    }
+    else{
+        return(strncmp(buf1,tmp,strlen(buf1)));
+    }
 }
 
 int chdir (const char *path){
@@ -119,7 +134,7 @@ DIR *opendir (const char *path){
     origin = dlsym(RTLD_NEXT, "opendir");
     if(origin != NULL) {
         return_val = origin(path);
-        printf( "# opendir(\"%s\") = %p\n", path, return_val);
+        //printf( "# opendir(\"%s\") = %p\n", path, return_val);
     }
     else printf("opendir() error\n");
     return return_val;
@@ -138,7 +153,7 @@ int chmod(const char *path, mode_t mode){
     origin = dlsym(RTLD_NEXT, "chmod");
     if(origin != NULL) {
         return_val = origin(path,mode);
-        printf( "# chmod(\"%s\") = %d\n", path, return_val);
+        //printf( "# chmod(\"%s\") = %d\n", path, return_val);
     }
     else printf("chdir() error\n");
     return return_val;
@@ -157,7 +172,7 @@ int chown(const char *file, uid_t owner, gid_t group){        //think about how 
     origin = dlsym(RTLD_NEXT, "chown");
     if(origin != NULL) {
         return_val = origin(file,owner,group);
-        printf( "# chown(\"%s\") = %d\n", file, return_val);
+        //printf( "# chown(\"%s\") = %d\n", file, return_val);
     }
     else printf("chown() error\n");
     //printf("run our own version of chown successfully\n");
@@ -179,7 +194,7 @@ int creat (const char *file, mode_t mode){
     origin = dlsym(RTLD_NEXT, "creat");
     if(origin != NULL) {
         return_val = origin(file,mode);
-        printf( "# creat(\"%s\") = %d\n", file, return_val);
+        //printf( "# creat(\"%s\") = %d\n", file, return_val);
     }
     else printf("creat() error\n");
     return return_val;
@@ -204,7 +219,7 @@ FILE *fopen(const char * __filename, const char * __modes){
     origin = dlsym(RTLD_NEXT, "fopen");
     if(origin != NULL) {
         return_val = origin(__filename,__modes);
-        printf( "# fopen(\"%s\") \n", __filename);
+        //printf( "# fopen(\"%s\") \n", __filename);
     }
     else printf("fopen() error\n");
     return return_val;

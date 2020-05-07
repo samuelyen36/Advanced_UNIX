@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
                 p_flag=1;
                 so_path = malloc(strlen(optarg));
                 strcpy(so_path,optarg);
-                printf("path to shared library: %s\n", so_path);
+                //printf("path to shared library: %s\n", so_path);
                 break;  
 
             case 'd':   
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]){
                 d_flag=1;
                 base_dir = malloc(strlen(optarg));
                 strcpy(base_dir,optarg);
-                printf("base directory: %s\n", base_dir);
+                //printf("base directory: %s\n", base_dir);
                 break;
             case '?':  
                 //printf("invalid option: %c\n", optopt);
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]){
         sprintf(cmd_res,"LD_PRELOAD=\"./sandbox.so\" %s",cmd);
     }
     if(d_flag==1){  //a specific path is given.
-        printf("d_flag is on\n");
+        //printf("d_flag is on\n");
         char tmp_dir[64];
         sprintf(tmp_dir,"SELF_DIR=%s",base_dir);
         if(putenv(tmp_dir)==-1){    //put the given directory into environemnt variable
@@ -114,13 +114,13 @@ int main(int argc, char *argv[]){
         }
     }
 
-    printf("cmd to be execute: %s\n",cmd_res);
+    printf("cmd to be execute: %s\n\n-----------\n\n",cmd_res);
 
     char *ptr;
 
-    if((ptr=getenv("SELF_DIR"))!=NULL){
+    /*if((ptr=getenv("SELF_DIR"))!=NULL){
         printf("\nyeahyeahyeah, we get env %s\n",ptr);
-    }
+    }*/
 
     ori_system(cmd_res);
 
