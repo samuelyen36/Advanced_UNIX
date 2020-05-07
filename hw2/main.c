@@ -25,7 +25,7 @@ FILE *fopen();
 int link();
 int mkdir();
 int open(const char *file, int oflag, ...);
-//int openat();   //????, be aware of it., jump first
+int openat (int fd, const char *file, int oflag, ...);   //????, be aware of it., jump first
 DIR *opendir();
 ssize_t readlink();
 int rename();
@@ -165,7 +165,7 @@ int chown(const char *file, uid_t owner, gid_t group){        //think about how 
 int creat (const char *file, mode_t mode){
     int return_val=-1;
     int (*origin)(const char *,mode_t mode) = NULL;
-    if(strncmp(file,"./",2)==0 || strncmp(file,"../",3)==0 || file[0]=='/'){    //file is related to directory
+    if(strncmp(file,"./",2)==0 || strncmp(file,"../",3)==0 || file[0]=='/' || strcmp(file,".")==0 || strcmp(file,"..")==0){    //file is related to directory
         char buf[64];
         getcwd(buf, sizeof(buf));   //get current absolute path
         if(check_escape_path(buf,file)!=0){    //escape
@@ -189,7 +189,7 @@ int creat (const char *file, mode_t mode){
 FILE *fopen(const char * __filename, const char * __modes){
     FILE *return_val=NULL;
     FILE* (*origin)(const char *,const char* __modes) = NULL;
-    if(strncmp(__filename,"./",2)==0 || strncmp(__filename,"../",3)==0 || __filename[0]=='/'){
+    if(strncmp(__filename,"./",2)==0 || strncmp(__filename,"../",3)==0 || __filename[0]=='/' || strcmp(__filename,".")==0 || strcmp(__filename,"..")==0){
         char buf[64];
         getcwd(buf, sizeof(buf));   //get current absolute path
         if(check_escape_path(buf,__filename)!=0){    //escape
@@ -216,7 +216,7 @@ int link(const char *oldpath, const char *newpath) {
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     
-    if(strncmp(oldpath,"./",2)==0 || strncmp(oldpath,"../",3)==0 || oldpath[0]=='/'){
+    if(strncmp(oldpath,"./",2)==0 || strncmp(oldpath,"../",3)==0 || oldpath[0]=='/' || strcmp(oldpath,".")==0 || strcmp(oldpath,"..")==0){
         if(check_escape_path(buf,oldpath)!=0 ){
                 char *err_msg = "[sandbox] link: access to: ";
                 char out_buf[128];
@@ -226,7 +226,7 @@ int link(const char *oldpath, const char *newpath) {
                 return return_val;
         }
     }
-    if(strncmp(newpath,"./",2)==0 || strncmp(newpath,"../",3)==0 || newpath[0]=='/'){
+    if(strncmp(newpath,"./",2)==0 || strncmp(newpath,"../",3)==0 || newpath[0]=='/' || strcmp(newpath,".")==0 || strcmp(newpath,"..")==0 ){
         if(check_escape_path(buf,newpath)!=0 ){
                 char *err_msg = "[sandbox] link: access to: ";
                 char out_buf[128];
@@ -250,7 +250,7 @@ int mkdir(const char *path, mode_t mode){
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     
-    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
         if(check_escape_path(buf,path)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -278,7 +278,7 @@ int open(const char *file, int oflag, ...){
     char buf[64];
     getcwd(buf, sizeof(buf));   //get current absolute path
     
-    if(strncmp(file,"./",2)==0 || strncmp(file,"../",3)==0 || file[0]=='/'){
+    if(strncmp(file,"./",2)==0 || strncmp(file,"../",3)==0 || file[0]=='/' || strcmp(file,".")==0 || strcmp(file,"..")==0){
         if(check_escape_path(buf,file)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -308,7 +308,7 @@ ssize_t readlink(const char *path, char *buf, size_t len){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
         
-    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
         if(check_escape_path(buf_curpath,path)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -333,7 +333,7 @@ int rename(const char *old, const char *new){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
-    if(strncmp(old,"./",2)==0 || strncmp(old,"../",3)==0 || old[0]=='/'){
+    if(strncmp(old,"./",2)==0 || strncmp(old,"../",3)==0 || old[0]=='/' || strcmp(old,".")==0 || strcmp(old,"..")==0){
         if(check_escape_path(buf_curpath,old)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -343,7 +343,7 @@ int rename(const char *old, const char *new){
         }
     }
 
-    if(strncmp(new,"./",2)==0 || strncmp(new,"../",3)==0 || new[0]=='/'){
+    if(strncmp(new,"./",2)==0 || strncmp(new,"../",3)==0 || new[0]=='/' || strcmp(new,".")==0 || strcmp(new,"..")==0){
         if(check_escape_path(buf_curpath,new)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -368,7 +368,7 @@ int rmdir(const char *path){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
-    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/'){
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
         if(check_escape_path(buf_curpath,path)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -393,11 +393,11 @@ int __xstat (int vers, const char *name, struct stat *buf){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
 
-    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0 ){
         if(check_escape_path(buf_curpath,name)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
-                sprintf(err_msg,"[sandbox] stat: access to %s is not allowed\n",name);
+                sprintf(err_msg,"[sandbox] __xstat: access to %s is not allowed\n",name);
                 write_to_terminal(err_msg);
                 return return_val;
         }
@@ -418,11 +418,11 @@ int __lxstat (int vers, const char *name, struct stat *buf){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
 
-    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0){
         if(check_escape_path(buf_curpath,name)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
-                sprintf(err_msg,"[sandbox] stat: access to %s is not allowed\n",name);
+                sprintf(err_msg,"[sandbox] __lxstat: access to %s is not allowed\n",name);
                 write_to_terminal(err_msg);
                 return return_val;
         }
@@ -443,7 +443,7 @@ int symlink(const char *from, const char *to){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
-    if(strncmp(from,"./",2)==0 || strncmp(from,"../",3)==0 || from[0]=='/'){
+    if(strncmp(from,"./",2)==0 || strncmp(from,"../",3)==0 || from[0]=='/' || strcmp(from,".")==0 || strcmp(from,"..")==0 ){
         if(check_escape_path(buf_curpath,from)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -453,7 +453,7 @@ int symlink(const char *from, const char *to){
         }
     }
 
-    if(strncmp(to,"./",2)==0 || strncmp(to,"../",3)==0 || to[0]=='/'){
+    if(strncmp(to,"./",2)==0 || strncmp(to,"../",3)==0 || to[0]=='/' || strcmp(to,".")==0 || strcmp(to,"..")==0){
         if(check_escape_path(buf_curpath,to)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -479,7 +479,7 @@ int unlink(const char *name){
     char buf_curpath[64];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
-    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/'){
+    if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0){
         if(check_escape_path(buf_curpath,name)!=0 ){
                 char err_msg[128];
                 memset(err_msg,'\0',128);
@@ -544,4 +544,58 @@ int system (const char *line){
     sprintf(err_msg,"[sandbox] system(%s): not allowed\n",line);
     write_to_terminal(err_msg);
     return -1;  //reject and fail this command
+}
+
+
+int openat (int fd, const char *file, int oflag, ...){
+    mode_t mode;
+    va_list all_arg;
+    va_start(all_arg,oflag);
+    mode = va_arg(all_arg,mode_t);
+    va_end(all_arg);
+    int return_val=-1;
+    ssize_t (*origin_readlink)(const char *, char *, size_t) = NULL;
+    int (*origin)(int fd, const char *file, int oflag, ...) = NULL;
+    int len=-1;
+    
+    origin_readlink = dlsym(RTLD_NEXT, "readlink");
+    /*if(origin != NULL) {
+        return_val = origin(path,buf,len);
+    }*/
+
+    char path[128];
+
+    if(fd!=AT_FDCWD){
+        char tmp[64];
+        int pid = getpid();
+        sprintf(tmp,"/proc/%d/fd/%d",pid,fd);
+        if((len=origin_readlink(tmp,path,sizeof(path)-1))!=-1){
+            if(path[strlen(path)-1] != '/'){
+                path[strlen(path)]='/';
+                path[strlen(path)+1]='\0';
+            }
+        }
+    }
+    strcat(path,file);  //concate with input(file)
+
+    char buf_curpath[64];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
+        if(check_escape_path(buf_curpath,path)!=0 ){
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] openat: access to %s is not allowed\n",path);
+                write_to_terminal(err_msg);
+                return return_val;
+        }
+    }
+
+    origin = dlsym(RTLD_NEXT, "openat");
+    if(origin != NULL) {
+        return_val = origin(fd,file,oflag,mode);
+    }
+    else write(STDOUT_FILENO,"openat error\n",strlen("openat error\n"));
+
+    return return_val;
 }

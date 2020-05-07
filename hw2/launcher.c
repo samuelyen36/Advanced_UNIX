@@ -114,8 +114,6 @@ int main(int argc, char *argv[]){
         }
     }
 
-    printf("cmd to be execute: %s\n\n-----------\n\n",cmd_res);
-
     char *ptr;
 
     /*if((ptr=getenv("SELF_DIR"))!=NULL){
