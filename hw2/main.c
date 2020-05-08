@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#define MAX_PATH_SIZE 128
 
 char *empty = "";
 
@@ -29,6 +30,7 @@ int openat (int fd, const char *file, int oflag, ...);   //????, be aware of it.
 DIR *opendir();
 ssize_t readlink();
 int rename();
+int remove ();
 int rmdir();
 int __xstat ();
 int __lxstat ();
@@ -63,10 +65,10 @@ void write_to_terminal(char *buf){  //write directly to terminal, which means th
 }
 
 int check_escape_path(const char *buf1,const char *buf2){       //buf1 is current(absolute) and buf2 can be relative(usually input of function)
-    char tmp[64];
-    char abs_self_dir[64];
-    memset(tmp,'\0',64);
-    memset(abs_self_dir,'\0',64);
+    char tmp[128];
+    char abs_self_dir[128];
+    memset(tmp,'\0',128);
+    memset(abs_self_dir,'\0',128);
     char *dir_from_env;
     if((dir_from_env=getenv("SELF_DIR")) != NULL ){ //-d flag is set
         realpath(dir_from_env,abs_self_dir);    //real path of dir_from_env
@@ -305,7 +307,7 @@ ssize_t readlink(const char *path, char *buf, size_t len){
     ssize_t (*origin)(const char *, char *, size_t) = NULL;
     ssize_t return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
         
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
@@ -330,7 +332,7 @@ int rename(const char *old, const char *new){
     int (*origin)(const char *, const char *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
     if(strncmp(old,"./",2)==0 || strncmp(old,"../",3)==0 || old[0]=='/' || strcmp(old,".")==0 || strcmp(old,"..")==0){
@@ -361,11 +363,38 @@ int rename(const char *old, const char *new){
     return return_val;
 }
 
+int remove(const char *path){
+    int (*origin)(const char *) = NULL;
+    int return_val = -1;
+
+    char buf_curpath[MAX_PATH_SIZE];
+    getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
+    
+    if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
+        if(check_escape_path(buf_curpath,path)!=0 ){
+                char err_msg[128];
+                memset(err_msg,'\0',128);
+                sprintf(err_msg,"[sandbox] remove: access to %s is not allowed\n",path);
+                write_to_terminal(err_msg);
+                return return_val;
+        }
+    }
+
+    origin = dlsym(RTLD_NEXT, "remove");
+    if(origin != NULL) {
+        return_val = origin(path);
+    }
+    else write(STDOUT_FILENO,"remove error\n",strlen("remove error\n"));
+    return return_val;
+
+}
+
+
 int rmdir(const char *path){
     int (*origin)(const char *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
@@ -390,7 +419,7 @@ int __xstat (int vers, const char *name, struct stat *buf){
     int (*origin)(int, const char *, struct stat *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
 
     if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0 ){
@@ -415,7 +444,7 @@ int __lxstat (int vers, const char *name, struct stat *buf){
     int (*origin)(int, const char *, struct stat *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
 
     if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0){
@@ -440,7 +469,7 @@ int symlink(const char *from, const char *to){
     int (*origin)(const char *, const char *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
     if(strncmp(from,"./",2)==0 || strncmp(from,"../",3)==0 || from[0]=='/' || strcmp(from,".")==0 || strcmp(from,"..")==0 ){
@@ -476,7 +505,7 @@ int unlink(const char *name){
     int (*origin)(const char *) = NULL;
     int return_val = -1;
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
     
     if(strncmp(name,"./",2)==0 || strncmp(name,"../",3)==0 || name[0]=='/' || strcmp(name,".")==0 || strcmp(name,"..")==0){
@@ -578,7 +607,7 @@ int openat (int fd, const char *file, int oflag, ...){
     }
     strcat(path,file);  //concate with input(file)
 
-    char buf_curpath[64];
+    char buf_curpath[MAX_PATH_SIZE];
     getcwd(buf_curpath, sizeof(buf_curpath));   //get current absolute path
 
     if(strncmp(path,"./",2)==0 || strncmp(path,"../",3)==0 || path[0]=='/' || strcmp(path,".")==0 || strcmp(path,"..")==0){
