@@ -1,0 +1,17 @@
+=========Q1==============
+mov eax,0x12d0d6b7
+mov ebx,0x1ee7a6a1
+add eax,ebx
+mov ebx,0x4bda4e3f
+sub eax,ebx
+=========Q1==============
+
+
+=========Q2==============
+mov eax,[0x600000]
+mov ebx,[0x600004]
+add eax,ebx
+mov ebx,[0x600008]
+sub eax,ebx
+mov [0x60000c],eax
+=========Q2==============
