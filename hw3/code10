@@ -1,0 +1,48 @@
+=====Q17(2516)=====
+mov eax,[0x600000]
+mov ebx,26
+mul ebx
+mov [0x600004],eax
+=====Q17(2516)=====
+
+=====Q18(2517)=====
+cmp eax,0
+JNLE L1
+mov edx,0xffffffff
+mov [0x600000],edx
+JMP L2		
+L1:
+mov edx,1
+mov [0x600000],edx
+L2:
+
+cmp ebx,0
+JNLE L3
+mov edx,0xffffffff
+mov [0x600004],edx
+JMP L4		
+L3:
+mov edx,1
+mov [0x600004],edx
+L4:
+
+cmp ecx,0
+JNLE L5
+mov edx,0xffffffff
+mov [0x600008],edx
+JMP L6	
+L5:
+mov edx,1
+mov [0x600008],edx
+L6:
+
+cmp edx,0
+JNLE L7
+mov eax,0xffffffff
+mov [0x60000c],eax
+JMP L8
+L7:
+mov eax,1
+mov [0x60000c],eax
+L8:
+=====Q18(2517)=====
