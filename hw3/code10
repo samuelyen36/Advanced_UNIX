@@ -1,3 +1,71 @@
+=========Q11(2510)==============
+mov eax,[0x600000]
+mov ebx,[0x600004]
+add eax,ebx
+mov ebx,[0x600008]
+mul ebx
+mov [0x60000c],eax
+=========Q11(2510)==============
+
+=========Q12(2511)==============
+mov eax,[0x600000]
+neg eax
+mov ebx,[0x600004]
+mul ebx
+mov ebx,[0x600008]
+add eax,ebx
+=========Q12(2511)==============
+
+
+=========Q13(2512)==============
+mov eax,[0x600000]
+mov ebx,5
+mul ebx
+mov edx,0
+mov ecx,[0x600004]
+mov ebx,3
+sub ecx,ebx
+div ecx
+mov [0x600008],eax
+=========Q13(2512)==============
+
+
+=========Q14(2513)==============
+mov eax,[0x600004]
+mov ebx,[0x600008]
+neg eax
+cdq
+idiv ebx
+mov ecx,edx
+
+mov eax,[0x600000]
+mov ebx,5
+mul ebx
+neg eax
+cdq
+
+idiv ecx
+mov [0x60000c],eax
+=========Q14(2513)==============
+
+
+=========Q15(2514)==============
+mov ecx,[0x600008]
+sub ecx,ebx
+
+mov eax,[0x600000]
+mov ebx,[0x600004]
+neg ebx
+imul ebx
+mov edx,0
+
+cdq
+idiv ecx
+mov [0x600008],eax
+=========Q15(2514)==============
+
+
+
 =====Q17(2516)=====
 mov eax,[0x600000]
 mov ebx,26
