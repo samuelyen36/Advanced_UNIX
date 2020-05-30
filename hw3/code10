@@ -64,6 +64,11 @@ idiv ecx
 mov [0x600008],eax
 =========Q15(2514)==============
 
+=====Q16(2515)=====
+call a
+a:
+mov eax,[esp]
+=====Q16(2515)=====
 
 
 =====Q17(2516)=====
@@ -114,3 +119,63 @@ mov eax,1
 mov [0x60000c],eax
 L8:
 =====Q18(2517)=====
+
+
+=====Q19(2518)=====
+    mov rbx, 16
+    mov rdx,0
+    jmp entry
+
+    val_0_1:    ;store value to rax
+    mov rcx,0
+    cmp rbx,rcx ;equals to 0, put 0 into rax
+    je v0
+    mov rax,1
+    jmp end_val_0_1
+    v0:
+    mov rax,0
+    end_val_0_1:
+    ret
+
+
+    compu:  ;rax as return value, use rbx as input param and use rcx and rdx as local
+    mov rcx,1
+    cmp rbx,rcx     ;check if it's less than or equals to 0
+    ja normal_case
+    call val_0_1    ;(if below or equal)
+    ret
+
+    normal_case:
+    sub rbx,1   ;n-1
+
+    push rbx
+    push rcx
+    push rdx
+    call compu
+    pop rdx
+    pop rcx
+    pop rbx
+
+    mov rdx,2
+    mul rdx ;rax now store (2*r(n-1))
+    mov rcx,rax ;mov 2*r(n-1) to rcx    and we'll use it later
+
+    sub rbx,1   ;n-2
+
+    push rbx
+    push rcx
+    push rdx
+    call compu
+    pop rdx
+    pop rcx
+    pop rbx
+
+    mov rdx,3
+    mul rdx
+    add rax,rcx ;rcx stores the previous result
+    ret
+
+
+    entry:
+        call compu
+=====Q19(2518)=====
