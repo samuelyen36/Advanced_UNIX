@@ -17,6 +17,34 @@ mov [0x60000c],eax
 =========Q2==============
 
 =========Q3==============
+mov eax,0
+L1:
+inc eax ;eax would be 1,2,3,4,5,6,7,8,9,10
+mov ebx,10
+cmp eax,ebx
+jg endloop
+
+mov ebx,0   ;idx for second loop
+L2:
+mov ecx,10
+sub ecx,eax     ;max boundary for second loop
+cmp ecx,ebx
+je endsecloop
+mov ecx,[0x600000 + ebx*4]
+mov edx,[0x600000 + (ebx+1)*4]
+cmp ecx,edx
+jl noswap   ;if less than, then don't swap
+mov [0x600000 + ebx*4],edx
+mov [0x600000 + (ebx+1)*4],ecx
+
+noswap:
+inc ebx
+jmp L2
+endsecloop:
+
+jmp L1
+endloop:
+
 =========Q3==============
 
 
@@ -32,6 +60,18 @@ or al,bl
 
 
 =========Q6(2505)==============
+mov rbx, 0
+lea rsi, [0x60000f]
+L1:
+mov cx, 2
+div cx	;divide ax by 2
+add dx, 0x30	;remainder+0x30 to hex
+mov [rsi], dl	;low 4 bits
+mov rdx, 0
+inc rbx
+dec rsi
+cmp rbx, 0x10
+jne L1
 =========Q6(2505)==============
 
 
@@ -59,3 +99,22 @@ lea ebx,[edi*2 + edi]
 lea ecx,[edi*4+edi]
 lea edx,[edi*8+edi]
 =========Q9(2508)==============
+
+
+=========Q10(2509)==============
+mov eax,0
+
+L1:
+mov bl,0x20
+mov cl,[0x600000 + eax]
+mov dl,0 ;compare if it's 0, then do not or
+cmp cl,dl
+je L2
+or cl,bl
+mov [0x600010 + eax],cl
+L2:
+inc eax
+mov ebx,0x10
+cmp eax,ebx
+jl L1
+=========Q10(2509)==============
