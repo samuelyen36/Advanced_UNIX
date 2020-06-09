@@ -1,0 +1,7 @@
+Q1 (traceme)
+在這題中我原本使用的是ptrace 一個child process(child裡面exec traceme)
+但結果用完發現還要再去peekdata，所以就改用gdb比較方便
+我選擇是用gdb去trace traceme2
+我在gdb將斷點設在line 47
+之後在raise那邊continue後
+就可以看到答案了
